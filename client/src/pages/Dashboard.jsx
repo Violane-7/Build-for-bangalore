@@ -1,43 +1,48 @@
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import HealthCharts from "../components/Dashboard/HealthCharts";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Float, MeshDistortMaterial, Sphere, Environment, Stars } from "@react-three/drei";
+import { ReactLenis } from "@studio-freight/react-lenis";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { EffectCards, Pagination } from "swiper/modules";
 
-// ─── Mock health data (replace with real API calls) ───────────────────────────
+// Import styles
+import "swiper/css";
+import "swiper/css/effect-cards";
+import "swiper/css/pagination";
+import "./Dashboard.css";
+
+gsap.registerPlugin(ScrollTrigger);
+
+// ─── Mock health data ───────────────────────────────────────────────
 const STATS = [
-  { label: "Heart Rate", value: 72, unit: "bpm", icon: "❤️", color: "#ef4444", bg: "rgba(239,68,68,0.12)", trend: "+2", trendUp: true },
-  { label: "Daily Steps", value: 8420, unit: "steps", icon: "👟", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", trend: "+340", trendUp: true },
-  { label: "Sleep", value: 7.2, unit: "hrs", icon: "🌙", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", trend: "-0.3", trendUp: false },
-  { label: "Calories", value: 1840, unit: "kcal", icon: "🔥", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", trend: "+120", trendUp: true },
+  { label: "Heart Rate", value: 72, unit: "bpm", trend: "+2%", trendUp: true },
+  { label: "Daily Steps", value: 8420, unit: "steps", trend: "+14%", trendUp: true },
+  { label: "Sleep", value: 7.2, unit: "hrs", trend: "-5%", trendUp: false },
+  { label: "Calories", value: 1840, unit: "kcal", trend: "+8%", trendUp: true },
 ];
 
 const FEATURE_CARDS = [
-  { to: "/glass-body", label: "Digital Twin", desc: "Explore your 3D body model", icon: "🫀", color: "#06b6d4", glow: "rgba(6,182,212,0.25)" },
-  { to: "/exposome", label: "Exposome Radar", desc: "Track environmental risks", icon: "🌍", color: "#10b981", glow: "rgba(16,185,129,0.25)" },
-  { to: "/appointments", label: "Appointments", desc: "Book & manage doctor visits", icon: "🏥", color: "#6366f1", glow: "rgba(99,102,241,0.25)" },
-  { to: "/grocery", label: "Grocery Scanner", desc: "Scan food for nutrition info", icon: "🥗", color: "#f59e0b", glow: "rgba(245,158,11,0.25)" },
-  { to: "/goals", label: "Goal Planner", desc: "Set & track health goals", icon: "🎯", color: "#ec4899", glow: "rgba(236,72,153,0.25)" },
-  { to: "/wearable", label: "Wearable Panel", desc: "Sync device health data", icon: "⌚", color: "#8b5cf6", glow: "rgba(139,92,246,0.25)" },
-  { to: "/emergency", label: "Emergency SOS", desc: "One-tap emergency alert", icon: "🚨", color: "#ef4444", glow: "rgba(239,68,68,0.25)" },
+  { to: "/glass-body", label: "Digital Twin", desc: "Interact with a real-time responsive 3D model of your biological systems. Identify risk areas visually.", icon: "🫀", bg: "linear-gradient(135deg, #0f172a 0%, #0891b2 100%)" },
+  { to: "/exposome", label: "Exposome Radar", desc: "Analyze environmental factors like UV, AQI, and local hazards affecting your long-term health.", icon: "🌍", bg: "linear-gradient(135deg, #022c22 0%, #059669 100%)" },
+  { to: "/appointments", label: "Appointments", desc: "Seamlessly schedule, reschedule, and manage your tele-health and in-person doctor visits.", icon: "🏥", bg: "linear-gradient(135deg, #312e81 0%, #4f46e5 100%)" },
+  { to: "/grocery", label: "Grocery Scanner", desc: "Scan nutritional labels and barcodes to get AI-powered insights on ingredient health scores.", icon: "🥗", bg: "linear-gradient(135deg, #451a03 0%, #d97706 100%)" },
+  { to: "/goals", label: "Goal Planner", desc: "Set dynamically adjusting health routines tailored to your metabolism and fitness history.", icon: "🎯", bg: "linear-gradient(135deg, #831843 0%, #db2777 100%)" },
+  { to: "/wearable", label: "Wearables", desc: "Sync vital data directly from Apple Watch, Garmin, and Fitbit to fuel AI diagnostics.", icon: "⌚", bg: "linear-gradient(135deg, #2e1065 0%, #7c3aed 100%)" },
+  { to: "/emergency", label: "Life Saver", desc: "One-tap emergency dispatches sharing your precise coordinates and full medical file.", icon: "🚨", bg: "linear-gradient(135deg, #450a0a 0%, #dc2626 100%)" },
 ];
 
-const HEALTH_ALERTS = [
-  { type: "warning", msg: "Hydration below target — drink 2 more glasses today", icon: "💧" },
-  { type: "success", msg: "Step goal 84% complete — keep going!", icon: "✅" },
-  { type: "info", msg: "Appointment with Dr. Priya scheduled for tomorrow", icon: "📅" },
-];
-
-const SCORE_COLOR = (s) => (s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444");
-
-// ─── Animated counter ─────────────────────────────────────────────────────────
 function AnimatedNumber({ value }) {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     let start = 0;
     const end = Number(value);
     if (start === end) return;
-    const dur = 1200;
+    const dur = 1500;
     const step = Math.ceil(dur / (end - start));
     const timer = setInterval(() => {
       start += Math.ceil(end / 60);
@@ -46,298 +51,208 @@ function AnimatedNumber({ value }) {
     }, step);
     return () => clearInterval(timer);
   }, [value]);
-  return <span>{typeof value === "number" && value % 1 !== 0 ? display.toFixed(1) : display.toLocaleString()}</span>;
+  return <span>{display.toLocaleString()}</span>;
 }
 
-// ─── Radial health score ring ─────────────────────────────────────────────────
-function HealthScoreRing({ score }) {
-  const r = 54; const circ = 2 * Math.PI * r;
-  const fill = (score / 100) * circ;
-  const color = SCORE_COLOR(score);
+// ─── 3D Hero Sphere ─────────────────────────────────────────────────────────────
+function HeroSphere() {
+  const meshRef = useRef();
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x = state.clock.getElapsedTime() * 0.2;
+      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
+    }
+  });
+
   return (
-    <div style={{ position: "relative", width: 140, height: 140 }}>
-      <svg width="140" height="140" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#2a2a2a" strokeWidth="10" />
-        <motion.circle
-          cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10"
-          strokeDasharray={circ} strokeLinecap="round"
-          initial={{ strokeDashoffset: circ }}
-          animate={{ strokeDashoffset: circ - fill }}
-          transition={{ duration: 1.4, ease: "easeOut" }}
+    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
+      <Sphere ref={meshRef} args={[1.5, 64, 64]} scale={1.2}>
+        <MeshDistortMaterial
+          color="#4f46e5"
+          envMapIntensity={1}
+          clearcoat={1}
+          clearcoatRoughness={0}
+          metalness={0.8}
+          roughness={0.2}
+          distort={0.4}
+          speed={2}
         />
-      </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontSize: "1.8rem", fontWeight: 800, color }}>{score}</span>
-        <span style={{ fontSize: "0.65rem", color: "#888", letterSpacing: "0.05em", textTransform: "uppercase" }}>Health Score</span>
-      </div>
-    </div>
+      </Sphere>
+      <Environment preset="city" />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1.5} />
+    </Float>
   );
 }
 
-// ─── Current time ─────────────────────────────────────────────────────────────
-function LiveClock() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
-  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return (
-    <div style={{ textAlign: "right" }}>
-      <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#e0e0e0", fontVariantNumeric: "tabular-nums" }}>
-        {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-      </div>
-      <div style={{ fontSize: "0.8rem", color: "#888" }}>
-        {days[now.getDay()]}, {months[now.getMonth()]} {now.getDate()} {now.getFullYear()}
-      </div>
-    </div>
-  );
-}
-
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+// ─── Dashboard Component ──────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
-  const healthScore = 76;
+  const statsRef = useRef(null);
+  const heroRef = useRef(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
+  useEffect(() => {
+    // GSAP Stat Cards Stagger Animation
+    const cards = gsap.utils.toArray(".stat-card");
+    gsap.fromTo(
+      cards,
+      { y: 100, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".stats-section",
+          start: "top 80%",
+        },
+      }
+    );
+
+    gsap.fromTo(
+      ".features-section",
+       { opacity: 0 },
+       { opacity: 1, duration: 1, scrollTrigger: { trigger: ".features-section", start: "top 70%" } }
+    );
+
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
+  }, []);
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
+    if (h < 12) return "Good Morning";
+    if (h < 17) return "Good Afternoon";
+    return "Good Evening";
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#e0e0e0", fontFamily: "'Inter', system-ui, sans-serif" }}>
-
-      {/* ── Hero Banner ── */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        style={{
-          background: "linear-gradient(135deg, #0f0f1e 0%, #1a1040 50%, #0f1a2e 100%)",
-          borderBottom: "1px solid #1e2040",
-          padding: "2rem 2.5rem",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-          {/* Left — greeting */}
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: "50%",
-              background: "linear-gradient(135deg, #6366f1, #06b6d4)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "1.5rem", fontWeight: 800, color: "#fff",
-              boxShadow: "0 0 20px rgba(99,102,241,0.4)",
-              flexShrink: 0,
-            }}>
-              {user?.name?.[0]?.toUpperCase() || "U"}
-            </div>
-            <div>
-              <p style={{ color: "#888", fontSize: "0.85rem", margin: 0 }}>{greeting()},</p>
-              <h1 style={{ margin: "0.15rem 0 0", fontSize: "1.6rem", fontWeight: 800, background: "linear-gradient(90deg,#a5b4fc,#67e8f9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                {user?.name || "User"} 👋
-              </h1>
-              <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "#666" }}>
-                {user?.gender ? `${user.gender.charAt(0).toUpperCase() + user.gender.slice(1)} • ` : ""}Let's check on your health today
-              </p>
-            </div>
+    <ReactLenis root options={{ lerp: 0.05, smoothWheel: true }}>
+      <div className="dashboard-container">
+        
+        {/* Nav Header */}
+        <nav className="nav-header">
+          <div className="user-badge">
+            <div className="user-avatar">{user?.name?.[0]?.toUpperCase() || "U"}</div>
+            <span style={{fontWeight: 600, color: "#fff"}}>{user?.name || "User"}</span>
           </div>
+          <button onClick={logout} className="logout-btn">Logout</button>
+        </nav>
 
-          {/* Center — health score ring */}
-          <HealthScoreRing score={healthScore} />
-
-          {/* Right — clock + logout */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.75rem" }}>
-            <LiveClock />
-            <button
-              onClick={logout}
-              style={{
-                background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.3)",
-                color: "#f87171", padding: "0.35rem 0.9rem", borderRadius: "8px",
-                cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
-              }}
-            >
-              Sign Out
-            </button>
+        {/* ── Hero Banner ── */}
+        <section className="hero-section" ref={heroRef}>
+          <div className="hero-canvas-container">
+            <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+              <HeroSphere />
+            </Canvas>
           </div>
-        </div>
-      </motion.div>
-
-      {/* ── Tabs ── */}
-      <div style={{ display: "flex", gap: "0.25rem", padding: "1rem 2.5rem 0", borderBottom: "1px solid #1a1a2a", background: "#0a0a0f" }}>
-        {["overview", "analytics", "features"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: "0.55rem 1.25rem", border: "none", borderRadius: "8px 8px 0 0",
-              cursor: "pointer", fontSize: "0.85rem", fontWeight: 600,
-              textTransform: "capitalize", transition: "all 0.2s",
-              background: activeTab === tab ? "#1a1a2e" : "transparent",
-              color: activeTab === tab ? "#a5b4fc" : "#666",
-              borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent",
-            }}
+          
+          <motion.div 
+            className="hero-content"
+            style={{ opacity: heroOpacity, y: heroY }}
           >
-            {tab}
-          </button>
-        ))}
-      </div>
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              style={{ color: "#a5b4fc", fontSize: "1.2rem", fontWeight: 600, marginBottom: "1rem", letterSpacing: "0.1em", textTransform: "uppercase" }}
+            >
+              {greeting()}, {user?.name || "User"}
+            </motion.h2>
+            <motion.h1 
+              className="hero-title"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              Your Health.<br/>Redefined.
+            </motion.h1>
+            <motion.p 
+              className="hero-subtitle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              Experience the next generation of proactive wellness. Scroll to explore
+              your vitals, deeply integrated digital twins, and AI-powered insights.
+            </motion.p>
+          </motion.div>
+        </section>
 
-      {/* ── Page Body ── */}
-      <div style={{ padding: "2rem 2.5rem" }}>
-        <AnimatePresence mode="wait">
-
-          {/* ══ OVERVIEW TAB ══ */}
-          {activeTab === "overview" && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-
-              {/* Stat Cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-                {STATS.map((s, i) => (
-                  <motion.div
-                    key={s.label}
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08, duration: 0.4 }}
-                    style={{
-                      background: s.bg,
-                      border: `1px solid ${s.color}33`,
-                      borderRadius: "16px",
-                      padding: "1.25rem 1.5rem",
-                      position: "relative",
-                      overflow: "hidden",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <p style={{ margin: 0, fontSize: "0.75rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</p>
-                        <p style={{ margin: "0.4rem 0 0", fontSize: "1.9rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-                          <AnimatedNumber value={s.value} /> <span style={{ fontSize: "0.85rem", color: "#aaa", fontWeight: 400 }}>{s.unit}</span>
-                        </p>
-                      </div>
-                      <span style={{ fontSize: "2rem" }}>{s.icon}</span>
-                    </div>
-                    <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                      <span style={{ fontSize: "0.7rem", color: s.trendUp ? "#4ade80" : "#f87171", background: s.trendUp ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)", padding: "0.15rem 0.5rem", borderRadius: "99px" }}>
-                        {s.trendUp ? "▲" : "▼"} {s.trend}
-                      </span>
-                      <span style={{ fontSize: "0.7rem", color: "#555" }}>vs yesterday</span>
-                    </div>
-                    {/* Decorative circle */}
-                    <div style={{ position: "absolute", right: -20, bottom: -20, width: 80, height: 80, borderRadius: "50%", background: s.color, opacity: 0.06 }} />
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Charts row */}
-              <HealthCharts />
-
-              {/* Alerts */}
-              <div style={{ marginTop: "2rem" }}>
-                <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#ccc", margin: "0 0 1rem" }}>Health Alerts</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                  {HEALTH_ALERTS.map((a, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + i * 0.1 }}
-                      style={{
-                        display: "flex", alignItems: "center", gap: "0.75rem",
-                        padding: "0.85rem 1.1rem",
-                        borderRadius: "10px",
-                        background: a.type === "warning" ? "rgba(245,158,11,0.08)" : a.type === "success" ? "rgba(16,185,129,0.08)" : "rgba(99,102,241,0.08)",
-                        border: `1px solid ${a.type === "warning" ? "rgba(245,158,11,0.2)" : a.type === "success" ? "rgba(16,185,129,0.2)" : "rgba(99,102,241,0.2)"}`,
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>{a.icon}</span>
-                      <span style={{ fontSize: "0.85rem", color: "#ccc" }}>{a.msg}</span>
-                    </motion.div>
-                  ))}
+        {/* ── Stats Overview ── */}
+        <section className="stats-section" ref={statsRef}>
+          <h2 className="section-title">Vitals Pulse</h2>
+          <div className="stats-grid">
+            {STATS.map((s) => (
+              <div key={s.label} className="stat-card">
+                <span className="stat-label">{s.label}</span>
+                <div className="stat-value">
+                  <AnimatedNumber value={s.value} />
+                  <span className="stat-unit">{s.unit}</span>
+                </div>
+                <div className={`stat-trend ${s.trendUp ? "trend-up" : "trend-down"}`}>
+                  {s.trend} from yesterday
                 </div>
               </div>
-            </motion.div>
-          )}
-
-          {/* ══ ANALYTICS TAB ══ */}
-          {activeTab === "analytics" && (
-            <motion.div key="analytics" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-              <HealthCharts fullView />
-            </motion.div>
-          )}
-
-          {/* ══ FEATURES TAB ══ */}
-          {activeTab === "features" && (
-            <motion.div key="features" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#888", margin: "0 0 1.25rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>All Features</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: "1.25rem" }}>
-                {FEATURE_CARDS.map((card, i) => (
-                  <motion.div
-                    key={card.to}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.07, duration: 0.35 }}
-                    whileHover={{ scale: 1.03, y: -3 }}
-                  >
-                    <Link to={card.to} style={{ display: "block", textDecoration: "none" }}>
-                      <div style={{
-                        padding: "1.5rem",
-                        borderRadius: "16px",
-                        background: "#0f0f1e",
-                        border: `1px solid ${card.color}33`,
-                        boxShadow: `0 4px 24px ${card.glow}`,
-                        transition: "border-color 0.2s",
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", marginBottom: "0.75rem" }}>
-                          <div style={{ fontSize: "2rem", width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", background: `${card.color}18`, borderRadius: "12px" }}>
-                            {card.icon}
-                          </div>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 700, color: "#e0e0e0", fontSize: "0.95rem" }}>{card.label}</p>
-                            <p style={{ margin: "0.15rem 0 0", fontSize: "0.75rem", color: "#666" }}>{card.desc}</p>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: card.color, fontSize: "0.8rem", fontWeight: 600 }}>
-                          Open <span style={{ fontSize: "0.75rem" }}>→</span>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
-
-      {/* ── Feature quick-strip (always visible on overview) ── */}
-      {activeTab === "overview" && (
-        <div style={{ padding: "0 2.5rem 2.5rem" }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#888", margin: "0 0 1rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Quick Access</h3>
-          <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
-            {FEATURE_CARDS.map((card) => (
-              <Link key={card.to} to={card.to} style={{ textDecoration: "none", flexShrink: 0 }}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "0.6rem",
-                    padding: "0.6rem 1rem",
-                    borderRadius: "10px",
-                    background: `${card.color}12`,
-                    border: `1px solid ${card.color}30`,
-                    color: card.color, fontSize: "0.82rem", fontWeight: 600,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <span>{card.icon}</span> {card.label}
-                </motion.div>
-              </Link>
             ))}
           </div>
-        </div>
-      )}
-    </div>
+        </section>
+
+        {/* ── Features Swiper ── */}
+        <section className="features-section">
+          <h2 className="section-title" style={{marginBottom: "1rem"}}>Ecosystem</h2>
+          <p style={{textAlign: "center", color: "#94a3b8", marginBottom: "4rem", maxWidth: "600px", margin: "0 auto 4rem auto"}}>
+            Swipe through our interconnected modules designed to provide 360-degree coverage over your life.
+          </p>
+
+          <Swiper
+            effect={'cards'}
+            grabCursor={true}
+            modules={[EffectCards, Pagination]}
+            className="swiper-container-custom"
+            pagination={{ clickable: true, dynamicBullets: true }}
+          >
+            {FEATURE_CARDS.map((card) => (
+              <SwiperSlide key={card.to} className="swiper-slide-custom">
+                <Link to={card.to} className="flashcard" style={{ background: card.bg }}>
+                  <div className="flashcard-content">
+                    <div className="flashcard-icon-wrapper">{card.icon}</div>
+                    
+                    <div>
+                      <h3 className="flashcard-title">{card.label}</h3>
+                      <p className="flashcard-desc">{card.desc}</p>
+                      
+                      <div className="flashcard-btn">
+                        Launch <span style={{fontSize: "1.2rem"}}>→</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </section>
+
+        {/* Footer CTA */}
+        <section className="footer-section">
+          <h2 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: "1.5rem" }}>Ready to optimize your biology?</h2>
+          <p style={{ color: "#94a3b8", marginBottom: "3rem", fontSize: "1.1rem" }}>All interconnected. All available at a single tap.</p>
+          <button className="footer-btn">Run Complete Diagnostics</button>
+        </section>
+
+      </div>
+    </ReactLenis>
   );
 }
