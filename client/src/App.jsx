@@ -30,7 +30,7 @@ export default function App() {
       <Route path="/glass-body" element={<PrivateRoute><GlassBody /></PrivateRoute>} />
       <Route path="/exposome" element={<PrivateRoute><Exposome /></PrivateRoute>} />
       <Route path="/appointments" element={<PrivateRoute><Appointments /></PrivateRoute>} />
-      <Route path="/grocery" element={<PrivateRoute><Grocery /></PrivateRoute>} />
+      <Route path="/grocery" element={<Grocery />} />
       <Route path="/goals" element={<PrivateRoute><GoalPlanner /></PrivateRoute>} />
       <Route path="/wearable" element={<PrivateRoute><Wearable /></PrivateRoute>} />
       <Route path="/emergency" element={<PrivateRoute><Emergency /></PrivateRoute>} />

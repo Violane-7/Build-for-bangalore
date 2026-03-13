@@ -25,6 +25,15 @@ export const updateAppointment = (id, data) => api.patch(`/appointments/${id}`, 
 export const scanGrocery = (data) => api.post("/grocery/scan", data);
 export const getGroceryHistory = () => api.get("/grocery/history");
 
+// Food Plate Analyzer
+export const analyzeFoodPlate = (data) => api.post("/food-plate/analyze", data);
+
+// Grocery Image Analyzer
+export const analyzeGroceryImage = (data) => api.post("/grocery/scan-image", data);
+
+// Health Q&A
+export const askHealthQuestion = (data) => api.post("/health-qa/ask", data);
+
 // Exposome
 export const getCurrentExposome = (lat, lon) => api.get(`/exposome/current?lat=${lat}&lon=${lon}`);
 export const getExposomeHistory = () => api.get("/exposome/history");

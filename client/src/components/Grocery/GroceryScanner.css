@@ -1,0 +1,289 @@
+/* ═══════════════════════════════════════════════════════
+   Grocery Scanner — Premium Dark Theme
+   ═══════════════════════════════════════════════════════ */
+
+.gs-container {
+  padding: 1.5rem;
+  animation: gsFadeIn 0.6s ease-out;
+}
+@keyframes gsFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Upload Zone */
+.gs-upload-zone {
+  border: 2px dashed rgba(34, 197, 94, 0.4);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.04), rgba(16, 185, 129, 0.04));
+}
+.gs-upload-zone:hover {
+  border-color: rgba(34, 197, 94, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12);
+}
+.gs-upload-zone.dragging {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+.gs-upload-icon { font-size: 3.5rem; margin-bottom: 1rem; display: block; }
+.gs-upload-title { font-size: 1.25rem; font-weight: 600; color: #e0e0e0; margin-bottom: 0.5rem; }
+.gs-upload-subtitle { font-size: 0.875rem; color: #888; }
+.gs-upload-btn {
+  margin-top: 1.25rem;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+.gs-upload-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(34, 197, 94, 0.4); }
+
+/* Preview */
+.gs-preview {
+  margin-top: 1.5rem;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.gs-preview img { width: 100%; height: 220px; object-fit: cover; border-radius: 16px; }
+.gs-preview-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 1rem;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gs-scan-btn {
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff; border: none; border-radius: 10px;
+  font-weight: 600; cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+.gs-scan-btn:hover { transform: translateY(-1px); }
+.gs-scan-btn:disabled { background: #444; cursor: not-allowed; box-shadow: none; }
+.gs-clear-btn {
+  padding: 0.6rem 1rem;
+  background: rgba(255,255,255,0.1);
+  color: #fff; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px; cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Loading */
+.gs-loading { text-align: center; padding: 3rem; }
+.gs-spinner {
+  width: 60px; height: 60px;
+  border: 4px solid rgba(34, 197, 94, 0.15);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+/* Overall Assessment */
+.gs-assessment {
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.gs-health-ring {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+.gs-health-ring svg { transform: rotate(-90deg); }
+.gs-health-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gs-health-pct { font-size: 1.4rem; font-weight: 800; color: #fff; }
+.gs-health-label { font-size: 0.6rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+.gs-assessment-text h3 { font-size: 1.1rem; font-weight: 600; color: #e0e0e0; margin-bottom: 0.4rem; }
+.gs-assessment-text p { font-size: 0.85rem; color: #999; line-height: 1.5; }
+
+/* Items Grid */
+.gs-items-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gs-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.gs-item-card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 14px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.3s ease;
+}
+.gs-item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.gs-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+.gs-item-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+.gs-item-category {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  font-weight: 500;
+}
+.gs-item-desc {
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+.gs-item-verdict {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+.gs-item-verdict.healthy {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+.gs-item-verdict.unhealthy {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+.gs-item-nutrients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.gs-nutrient-chip {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  color: #aaa;
+}
+.gs-item-benefits {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 0.75rem;
+}
+.gs-item-benefits p {
+  font-size: 0.75rem;
+  color: #22c55e;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+.gs-item-benefits ul {
+  list-style: none;
+  padding: 0;
+}
+.gs-item-benefits li {
+  font-size: 0.78rem;
+  color: #999;
+  padding: 0.2rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+.gs-item-benefits li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #22c55e;
+}
+
+/* Combo Suggestions */
+.gs-combos-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gs-combos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.gs-combo-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(59, 130, 246, 0.06));
+  border-radius: 14px;
+  padding: 1.25rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  transition: all 0.3s ease;
+}
+.gs-combo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
+}
+.gs-combo-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.gs-combo-title { font-size: 0.95rem; font-weight: 600; color: #c4b5fd; margin-bottom: 0.5rem; }
+.gs-combo-reason { font-size: 0.8rem; color: #999; line-height: 1.5; }
+.gs-combo-items {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.gs-combo-item-tag {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border-radius: 20px;
+}
+
+@media (max-width: 640px) {
+  .gs-items-grid, .gs-combos-grid { grid-template-columns: 1fr; }
+  .gs-assessment { flex-direction: column; text-align: center; }
+}

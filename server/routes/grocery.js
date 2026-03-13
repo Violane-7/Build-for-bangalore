@@ -33,4 +33,14 @@ router.get("/history", auth, async (req, res) => {
   }
 });
 
+// POST /api/grocery/scan-image — analyze a grocery list image
+router.post("/scan-image", async (req, res) => {
+  try {
+    const aiResponse = await aiService.groceryAnalyzeImage(req.body);
+    res.json(aiResponse.data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
