@@ -13,96 +13,40 @@ import AlarmSystem from '../components/Emergency/AlarmSystem';
 import EmergencyContacts from '../components/Emergency/EmergencyContacts';
 import FirstAidGuide from '../components/Emergency/FirstAidGuide';
 import EmergencyTimeline from '../components/Emergency/EmergencyTimeline';
+import { useVitals } from '../context/VitalsContext';
 import '../components/Emergency/Emergency.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Simulate wearable vital readings
-function generateVitals(scenario = 'normal') {
-  const base = {
-    heartRate: 68 + Math.floor(Math.random() * 12),
-    spo2: 96 + Math.floor(Math.random() * 3),
-    bloodPressure: {
-      systolic: 115 + Math.floor(Math.random() * 10),
-      diastolic: 72 + Math.floor(Math.random() * 8),
-    },
-    temperature: 36.5 + Math.random() * 0.5,
-    respiratoryRate: 14 + Math.floor(Math.random() * 4),
-  };
-
-  switch (scenario) {
-    case 'heart-attack':
-      return {
-        ...base,
-        heartRate: 155 + Math.floor(Math.random() * 15),
-        bloodPressure: { systolic: 175 + Math.floor(Math.random() * 10), diastolic: 100 + Math.floor(Math.random() * 10) },
-        spo2: 88 + Math.floor(Math.random() * 3),
-      };
-    case 'cardiac-arrest':
-      return {
-        ...base,
-        heartRate: Math.floor(Math.random() * 12),
-        spo2: 70 + Math.floor(Math.random() * 10),
-        bloodPressure: { systolic: 60, diastolic: 30 },
-      };
-    case 'fainting':
-      return {
-        ...base,
-        heartRate: 45 + Math.floor(Math.random() * 10),
-        spo2: 87 + Math.floor(Math.random() * 4),
-        bloodPressure: { systolic: 80 + Math.floor(Math.random() * 10), diastolic: 45 },
-      };
-    case 'heat-stroke':
-      return {
-        ...base,
-        temperature: 40.2 + Math.random() * 0.8,
-        heartRate: 110 + Math.floor(Math.random() * 20),
-        spo2: 93 + Math.floor(Math.random() * 3),
-      };
-    case 'hypotension':
-      return {
-        ...base,
-        bloodPressure: { systolic: 65 + Math.floor(Math.random() * 5), diastolic: 38 },
-        heartRate: 100 + Math.floor(Math.random() * 15),
-      };
-    default:
-      return base;
-  }
-}
-
 export default function Emergency() {
   const navigate = useNavigate();
-  const [vitals, setVitals] = useState(generateVitals('normal'));
+
+  // Use shared vitals from context
+  const { vitals, scenario, isWearableConnected, simulateScenario } = useVitals();
+
   const [detection, setDetection] = useState(null);
   const [alarmActive, setAlarmActive] = useState(false);
   const [emergencyActive, setEmergencyActive] = useState(false);
-  const [demoScenario, setDemoScenario] = useState('normal');
   const [contacts, setContacts] = useState([]);
   const [firstAidSteps, setFirstAidSteps] = useState([]);
   const [emergencyTypeName, setEmergencyTypeName] = useState('');
 
   const sectionsRef = useRef([]);
   const lenisRef = useRef(null);
-  const vitalsInterval = useRef(null);
 
-  // ── Vitals simulation ─────────────────────
+  // ── Run detection whenever vitals change ─────────────────────
   useEffect(() => {
-    vitalsInterval.current = setInterval(() => {
-      const newVitals = generateVitals(demoScenario);
-      setVitals(newVitals);
+    if (!vitals || !vitals.heartRate) return;
 
-      // Run detection
-      const result = detectEmergency(newVitals);
-      setDetection(result);
+    const result = detectEmergency(vitals);
+    setDetection(result);
 
-      // Auto-trigger if emergency severity
-      if (result && result.severity === 'emergency' && !emergencyActive) {
-        setEmergencyActive(true);
-      }
-    }, 2000);
-
-    return () => clearInterval(vitalsInterval.current);
-  }, [demoScenario, emergencyActive]);
+    // Auto-trigger if emergency severity
+    if (result && result.severity === 'emergency' && !emergencyActive) {
+      setEmergencyActive(true);
+      setAlarmActive(true);
+    }
+  }, [vitals, emergencyActive]);
 
   // ── Update first-aid when detection changes ──
   useEffect(() => {
@@ -125,20 +69,20 @@ export default function Emergency() {
   const handleSOSCancel = useCallback(() => {
     setEmergencyActive(false);
     setAlarmActive(false);
-    setDemoScenario('normal');
-  }, []);
+    simulateScenario('normal');
+  }, [simulateScenario]);
 
   const handleAlarmMute = useCallback(() => {
     setAlarmActive(false);
   }, []);
 
-  // ── Demo scenario control ─────────────────
-  const handleDemoChange = (scenario) => {
-    if (scenario === 'normal') {
+  // ── Demo scenario control (uses shared context) ─────────────────
+  const handleDemoChange = (newScenario) => {
+    if (newScenario === 'normal') {
       setEmergencyActive(false);
       setAlarmActive(false);
     }
-    setDemoScenario(scenario);
+    simulateScenario(newScenario);
   };
 
   // ── Lenis Smooth Scrolling ─────────────────
@@ -216,6 +160,16 @@ export default function Emergency() {
       </nav>
 
       <div className="emergency-content">
+        {/* Wearable Connection Status */}
+        <div className="wearable-sync-banner">
+          <span className={`sync-dot ${isWearableConnected ? 'connected' : ''}`} />
+          {isWearableConnected ? (
+            <span>📡 Receiving live data from Wearable — <strong>HR: {Math.round(vitals.heartRate || 72)} bpm</strong>, <strong>SpO₂: {Math.round(vitals.spo2 || 97)}%</strong></span>
+          ) : (
+            <span>⚠️ Wearable not connected — <button onClick={() => navigate('/wearable')} className="sync-link">Go to Wearable</button></span>
+          )}
+        </div>
+
         {/* Demo Controls */}
         <div className="demo-controls">
           <span className="demo-label">🧪 Demo Mode — Simulate Emergency Scenarios:</span>
@@ -229,7 +183,7 @@ export default function Emergency() {
           ].map((s) => (
             <button
               key={s.key}
-              className={`demo-btn ${demoScenario === s.key ? 'active' : ''}`}
+              className={`demo-btn ${scenario === s.key ? 'active' : ''}`}
               onClick={() => handleDemoChange(s.key)}
             >
               {s.label}

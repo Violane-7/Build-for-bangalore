@@ -8,6 +8,11 @@ const doctorSchema = new mongoose.Schema(
     fees: { type: String, required: true },
     image: { type: String, required: true },
     availableTimes: [{ type: String }],
+    city: { type: String, default: "" },
+    hospital: { type: String, default: "" },
+    languages: [{ type: String }],
+    consultationMode: [{ type: String }],
+    rating: { type: Number, default: 4.5 },
     bio: { type: String },
   },
   { timestamps: true }

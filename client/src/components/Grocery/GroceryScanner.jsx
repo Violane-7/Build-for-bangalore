@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import "./GroceryScanner.css";
 
-// Fallback data when backend is unavailable
 const FALLBACK_ITEMS = [
   { key: "apple", name: "Apple", category: "Fruit", description: "A crisp, fiber-rich fruit containing pectin for gut health and quercetin antioxidants.", nutrition: { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4 }, benefits: ["Rich in antioxidants for heart health", "Pectin fiber feeds gut bacteria", "May reduce diabetes risk", "Low calorie, high satiety"], isHealthy: true, healthVerdict: "Excellent daily choice — scientifically backed for disease prevention." },
   { key: "milk", name: "Milk", category: "Dairy", description: "Complete nutritional beverage rich in calcium, protein, and vitamin D for bone health.", nutrition: { calories: 61, protein: 3.2, carbs: 5, fat: 3.3, fiber: 0 }, benefits: ["Outstanding calcium for bone health", "Complete protein with all amino acids", "Vitamin D enhances calcium absorption", "Promotes muscle recovery"], isHealthy: true, healthVerdict: "Excellent daily staple — best source of calcium and vitamin D." },
@@ -21,8 +20,31 @@ const FALLBACK_COMBOS = [
   { title: "Complete Protein Combo", reason: "Combine grains with dairy or eggs for complete amino acid profiles.", icon: "🏆", items: ["bread", "eggs", "milk"] },
 ];
 
+const CATEGORY_STYLE = (cat) => {
+  const c = (cat || "").toLowerCase();
+  if (c.includes("fruit")) return { accent: "#f97316", bg: "rgba(249,115,22,0.1)", text: "#fb923c", label: "🍎 Fruit" };
+  if (c.includes("veg")) return { accent: "#22c55e", bg: "rgba(34,197,94,0.1)", text: "#4ade80", label: "🥦 Vegetable" };
+  if (c.includes("protein") || c.includes("meat") || c.includes("poultry") || c.includes("egg")) return { accent: "#3b82f6", bg: "rgba(59,130,246,0.1)", text: "#60a5fa", label: "🥩 Protein" };
+  if (c.includes("dairy")) return { accent: "#8b5cf6", bg: "rgba(139,92,246,0.1)", text: "#a78bfa", label: "🥛 Dairy" };
+  if (c.includes("grain") || c.includes("bread") || c.includes("cereal")) return { accent: "#f59e0b", bg: "rgba(245,158,11,0.1)", text: "#fbbf24", label: "🌾 Grain" };
+  if (c.includes("snack") || c.includes("chip") || c.includes("candy") || c.includes("junk")) return { accent: "#ef4444", bg: "rgba(239,68,68,0.1)", text: "#f87171", label: "🍟 Snack" };
+  return { accent: "#6366f1", bg: "rgba(99,102,241,0.1)", text: "#818cf8", label: "🛒 " + (cat || "Other") };
+};
+
+function NutritionBar({ label, value, max, color, unit }) {
+  const pct = Math.min(100, ((value || 0) / max) * 100);
+  return (
+    <div className="gs-nutr-row">
+      <span className="gs-nutr-label">{label}</span>
+      <div className="gs-nutr-track">
+        <div className="gs-nutr-fill" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <span className="gs-nutr-value">{value}{unit}</span>
+    </div>
+  );
+}
+
 export default function GroceryScanner() {
-  const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -33,40 +55,30 @@ export default function GroceryScanner() {
   useEffect(() => {
     if (result && cardsRef.current.length > 0) {
       gsap.from(cardsRef.current.filter(Boolean), {
-        y: 40, opacity: 0,
-        duration: 0.5, stagger: 0.08,
-        ease: "power3.out",
+        y: 30, opacity: 0, duration: 0.45, stagger: 0.06, ease: "power3.out",
       });
     }
   }, [result]);
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    setImage(file);
     setResult(null);
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
     reader.readAsDataURL(file);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    handleFile(e.dataTransfer.files[0]);
-  };
+  const handleDrop = (e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); };
 
   const scanGrocery = async () => {
     setLoading(true);
     try {
       const base64 = preview.split(",")[1];
-      const res = await fetch(
-        `/api/grocery/scan-image`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: base64 }),
-        }
-      );
+      const res = await fetch("/api/grocery/scan-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
+      });
       if (res.ok) {
         const data = await res.json();
         setResult(data);
@@ -74,9 +86,9 @@ export default function GroceryScanner() {
         throw new Error("API error");
       }
     } catch {
-      // Fallback
-      const items = FALLBACK_ITEMS.sort(() => Math.random() - 0.5).slice(0, 5 + Math.floor(Math.random() * 3));
-      const healthyCount = items.filter(i => i.isHealthy).length;
+      // Show ALL fallback items — no random slicing
+      const items = FALLBACK_ITEMS;
+      const healthyCount = items.filter((i) => i.isHealthy).length;
       const pct = Math.round((healthyCount / items.length) * 100);
       setResult({
         items,
@@ -85,7 +97,9 @@ export default function GroceryScanner() {
           healthyItems: healthyCount,
           totalItems: items.length,
           healthPercentage: pct,
-          verdict: pct >= 80 ? "Excellent! Your grocery list is packed with nutritious choices." : "Good mix! Consider adding more vegetables and reducing processed items.",
+          verdict: pct >= 80
+            ? "Excellent! Your grocery list is packed with nutritious choices."
+            : "Good mix! Consider adding more vegetables and reducing processed items.",
         },
       });
     }
@@ -93,27 +107,19 @@ export default function GroceryScanner() {
   };
 
   const clearImage = () => {
-    setImage(null);
     setPreview(null);
     setResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const ringColor = result
-    ? result.overallAssessment.healthPercentage >= 80
-      ? "#22c55e"
-      : result.overallAssessment.healthPercentage >= 50
-        ? "#eab308"
-        : "#ef4444"
-    : "#22c55e";
-
-  const circumference = 2 * Math.PI * 36;
-  const dashoffset = result
-    ? circumference - (result.overallAssessment.healthPercentage / 100) * circumference
-    : circumference;
+  const score = result?.overallAssessment?.healthPercentage ?? 0;
+  const scoreColor = score >= 80 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const circumference = 2 * Math.PI * 52;
+  const dashoffset = result ? circumference - (score / 100) * circumference : circumference;
 
   return (
     <div className="gs-container">
+
       {/* Upload Zone */}
       {!preview && (
         <motion.div
@@ -122,20 +128,18 @@ export default function GroceryScanner() {
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          whileHover={{ scale: 1.005 }}
+          whileTap={{ scale: 0.995 }}
         >
-          <span className="gs-upload-icon">🛒</span>
-          <p className="gs-upload-title">Upload Your Grocery List</p>
-          <p className="gs-upload-subtitle">
-            Upload a photo of your grocery receipt, list, or items
-          </p>
-          <button className="gs-upload-btn"
-            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-            Choose Image
+          <div className="gs-upload-icon-wrap">
+            <span>🛒</span>
+          </div>
+          <p className="gs-upload-title">Drop your grocery list here</p>
+          <p className="gs-upload-hint">Photo of receipt, handwritten list, or grocery bag</p>
+          <button className="gs-upload-btn" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
+            Choose Photo
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*"
-            style={{ display: "none" }}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
             onChange={(e) => handleFile(e.target.files[0])} />
         </motion.div>
       )}
@@ -144,15 +148,13 @@ export default function GroceryScanner() {
       <AnimatePresence>
         {preview && !result && !loading && (
           <motion.div className="gs-preview"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}>
             <img src={preview} alt="Grocery list" />
             <div className="gs-preview-bar">
               <button className="gs-clear-btn" onClick={clearImage}>✕ Clear</button>
-              <button className="gs-scan-btn" onClick={scanGrocery} disabled={loading}>
-                🔍 Analyze Groceries
-              </button>
+              <button className="gs-scan-btn" onClick={scanGrocery}>🔍 Analyze Now</button>
             </div>
           </motion.div>
         )}
@@ -161,10 +163,9 @@ export default function GroceryScanner() {
       {/* Loading */}
       {loading && (
         <div className="gs-loading">
-          <div className="gs-spinner" />
-          <p className="fpa-loading-text">
-            Scanning your grocery list and analyzing nutrition...
-          </p>
+          <div className="gs-loading-ring" />
+          <p className="gs-loading-title">Scanning your groceries…</p>
+          <p className="gs-loading-sub">Identifying items & analyzing nutrition</p>
         </div>
       )}
 
@@ -172,74 +173,119 @@ export default function GroceryScanner() {
       <AnimatePresence>
         {result && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {/* Overall Assessment */}
-            <div className="gs-assessment">
-              <div className="gs-health-ring">
-                <svg width="90" height="90">
-                  <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                  <circle cx="45" cy="45" r="36" fill="none" stroke={ringColor} strokeWidth="6"
+
+            {/* Score Header */}
+            <div className="gs-score-header">
+              <div className="gs-score-ring-wrap">
+                <svg width="124" height="124" viewBox="0 0 124 124">
+                  <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9" />
+                  <circle cx="62" cy="62" r="52" fill="none" stroke={scoreColor} strokeWidth="9"
                     strokeDasharray={circumference} strokeDashoffset={dashoffset}
-                    strokeLinecap="round" style={{ transition: "stroke-dashoffset 1.5s ease" }} />
+                    strokeLinecap="round"
+                    style={{ transform: "rotate(-90deg)", transformOrigin: "62px 62px", transition: "stroke-dashoffset 1.4s ease" }} />
                 </svg>
-                <div className="gs-health-ring-text">
-                  <span className="gs-health-pct">{result.overallAssessment.healthPercentage}%</span>
-                  <span className="gs-health-label">Healthy</span>
+                <div className="gs-score-center">
+                  <span className="gs-score-num" style={{ color: scoreColor }}>{score}</span>
+                  <span className="gs-score-denom">/100</span>
                 </div>
               </div>
-              <div className="gs-assessment-text">
-                <h3>{result.overallAssessment.healthyItems} of {result.overallAssessment.totalItems} items are healthy</h3>
-                <p>{result.overallAssessment.verdict}</p>
+              <div className="gs-score-info">
+                <p className="gs-score-eyebrow">Health Score</p>
+                <div className="gs-score-stats">
+                  <div className="gs-stat">
+                    <span className="gs-stat-num gs-stat-healthy">{result.overallAssessment.healthyItems}</span>
+                    <span className="gs-stat-label">Healthy</span>
+                  </div>
+                  <div className="gs-stat-divider" />
+                  <div className="gs-stat">
+                    <span className="gs-stat-num">{result.overallAssessment.totalItems}</span>
+                    <span className="gs-stat-label">Total Items</span>
+                  </div>
+                </div>
+                <p className="gs-score-verdict">{result.overallAssessment.verdict}</p>
               </div>
             </div>
 
-            {/* Items Grid */}
-            <p className="gs-items-title">📦 Your Grocery Items</p>
+            {/* Extra detected items (if API returns raw list beyond analyzed set) */}
+            {(result.detectedItems || result.detected_items || result.allItems) && (
+              <div className="gs-detected-wrap">
+                <p className="gs-detected-label">All detected items</p>
+                <div className="gs-detected-tags">
+                  {(result.detectedItems || result.detected_items || result.allItems).map((it, i) => (
+                    <span key={i} className="gs-detected-tag">{it}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Section: Items */}
+            <div className="gs-section-head">
+              <h3 className="gs-section-title">Grocery Items</h3>
+              <span className="gs-section-badge">{result.items.length} items</span>
+            </div>
+
             <div className="gs-items-grid">
-              {result.items.map((item, i) => (
-                <div key={i} className="gs-item-card"
-                  ref={(el) => (cardsRef.current[i] = el)}>
-                  <div className="gs-item-header">
-                    <span className="gs-item-name">{item.name}</span>
-                    <span className="gs-item-category">{item.category}</span>
+              {result.items.map((item, i) => {
+                const cs = CATEGORY_STYLE(item.category);
+                const n = item.nutrition || {};
+                return (
+                  <div key={i} className="gs-item-card" ref={(el) => (cardsRef.current[i] = el)}
+                    style={{ borderLeftColor: cs.accent }}>
+                    {/* Card header */}
+                    <div className="gs-card-head">
+                      <div className="gs-card-head-left">
+                        <p className="gs-card-name">{item.name}</p>
+                        <span className="gs-card-cat" style={{ background: cs.bg, color: cs.text }}>{cs.label}</span>
+                      </div>
+                      <div className={`gs-card-badge ${item.isHealthy ? "good" : "warn"}`}>
+                        {item.isHealthy ? "✓" : "!"}
+                      </div>
+                    </div>
+
+                    {/* Nutrition bars */}
+                    {n.calories != null && (
+                      <div className="gs-nutr-bars">
+                        {n.calories != null && <NutritionBar label="Cal" value={n.calories} max={600} color="#f97316" unit="" />}
+                        {n.protein != null && <NutritionBar label="Protein" value={n.protein} max={35} color="#3b82f6" unit="g" />}
+                        {n.carbs != null && <NutritionBar label="Carbs" value={n.carbs} max={60} color="#f59e0b" unit="g" />}
+                        {n.fiber != null && n.fiber > 0 && <NutritionBar label="Fiber" value={n.fiber} max={10} color="#22c55e" unit="g" />}
+                      </div>
+                    )}
+
+                    {/* Verdict */}
+                    <p className={`gs-card-verdict ${item.isHealthy ? "pos" : "neg"}`}>
+                      {item.healthVerdict}
+                    </p>
+
+                    {/* Benefits */}
+                    {item.benefits?.length > 0 && (
+                      <ul className="gs-card-benefits">
+                        {item.benefits.slice(0, 2).map((b, j) => <li key={j}>{b}</li>)}
+                      </ul>
+                    )}
                   </div>
-                  <p className="gs-item-desc">{item.description}</p>
-                  <div className={`gs-item-verdict ${item.isHealthy ? "healthy" : "unhealthy"}`}>
-                    {item.isHealthy ? "✅" : "⚠️"} {item.healthVerdict}
-                  </div>
-                  <div className="gs-item-nutrients">
-                    {item.nutrition.calories != null && <span className="gs-nutrient-chip">🔥 {item.nutrition.calories} kcal</span>}
-                    {item.nutrition.protein != null && <span className="gs-nutrient-chip">💪 {item.nutrition.protein}g protein</span>}
-                    {item.nutrition.fiber != null && item.nutrition.fiber > 0 && <span className="gs-nutrient-chip">🌿 {item.nutrition.fiber}g fiber</span>}
-                  </div>
-                  <div className="gs-item-benefits">
-                    <p>✨ Benefits</p>
-                    <ul>
-                      {(item.benefits || []).slice(0, 3).map((b, j) => (
-                        <li key={j}>{b}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Combination Suggestions */}
-            {result.combinations && result.combinations.length > 0 && (
+            {/* Power Combinations */}
+            {result.combinations?.length > 0 && (
               <>
-                <p className="gs-combos-title">🧪 Smart Combinations for Maximum Benefits</p>
+                <div className="gs-section-head">
+                  <h3 className="gs-section-title">Power Combinations</h3>
+                  <span className="gs-section-badge">{result.combinations.length} tips</span>
+                </div>
                 <div className="gs-combos-grid">
                   {result.combinations.map((combo, i) => (
                     <motion.div key={i} className="gs-combo-card"
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + i * 0.1 }}>
-                      <div className="gs-combo-icon">{combo.icon}</div>
-                      <p className="gs-combo-title">{combo.title}</p>
-                      <p className="gs-combo-reason">{combo.reason}</p>
-                      <div className="gs-combo-items">
-                        {combo.items.map((item, j) => (
-                          <span key={j} className="gs-combo-item-tag">{item}</span>
-                        ))}
+                      transition={{ delay: 0.08 * i }}>
+                      <span className="gs-combo-icon">{combo.icon}</span>
+                      <p className="gs-combo-name">{combo.title}</p>
+                      <p className="gs-combo-desc">{combo.reason}</p>
+                      <div className="gs-combo-tags">
+                        {combo.items.map((it, j) => <span key={j} className="gs-combo-tag">{it}</span>)}
                       </div>
                     </motion.div>
                   ))}
@@ -247,12 +293,10 @@ export default function GroceryScanner() {
               </>
             )}
 
-            {/* Scan Another */}
-            <div style={{ textAlign: "center", marginTop: "1rem" }}>
-              <button className="gs-upload-btn" onClick={clearImage}>
-                🛒 Scan Another List
-              </button>
+            <div className="gs-scan-again-wrap">
+              <button className="gs-scan-again-btn" onClick={clearImage}>Scan Another List</button>
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>

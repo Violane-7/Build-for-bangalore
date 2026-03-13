@@ -1,369 +1,411 @@
 /* ═══════════════════════════════════════════════════════
-   Food Plate Analyzer — Premium Dark Theme
+   Food Plate Analyzer — Clean Modern Design
    ═══════════════════════════════════════════════════════ */
 
 .fpa-container {
-  padding: 1.5rem;
-  animation: fpaFadeIn 0.6s ease-out;
-}
-
-@keyframes fpaFadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  padding: 2rem;
 }
 
 /* Upload Zone */
 .fpa-upload-zone {
-  position: relative;
-  border: 2px dashed rgba(139, 92, 246, 0.4);
+  border: 2px dashed rgba(139, 92, 246, 0.3);
   border-radius: 20px;
-  padding: 3rem 2rem;
+  padding: 3.5rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
-  overflow: hidden;
+  transition: all 0.3s ease;
+  background: rgba(139, 92, 246, 0.03);
 }
-.fpa-upload-zone::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 22px;
-  background: conic-gradient(from 0deg, #8b5cf6, #3b82f6, #06b6d4, #8b5cf6);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.fpa-upload-zone:hover::before {
-  opacity: 0.3;
-}
+
 .fpa-upload-zone:hover {
-  border-color: rgba(139, 92, 246, 0.8);
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.06);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
 }
+
 .fpa-upload-zone.dragging {
   border-color: #8b5cf6;
   background: rgba(139, 92, 246, 0.1);
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
+
 .fpa-upload-icon {
   font-size: 3.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   display: block;
-  animation: floatIcon 3s ease-in-out infinite;
 }
-@keyframes floatIcon {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
+
 .fpa-upload-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #e0e0e0;
   margin-bottom: 0.5rem;
 }
+
 .fpa-upload-subtitle {
-  font-size: 0.875rem;
-  color: #888;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.5rem;
 }
+
 .fpa-upload-btn {
-  margin-top: 1.25rem;
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: #fff;
   border: none;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
+
 .fpa-upload-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
 }
 
 /* Preview */
 .fpa-preview {
   margin-top: 1.5rem;
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  max-width: 400px;
+  max-width: 420px;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
+
 .fpa-preview img {
   width: 100%;
-  height: 250px;
+  height: 280px;
   object-fit: cover;
-  border-radius: 16px;
+  display: block;
 }
+
 .fpa-preview-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem;
-  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  padding: 1.25rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .fpa-analyze-btn {
-  padding: 0.6rem 1.5rem;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
+
 .fpa-analyze-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
 }
+
 .fpa-analyze-btn:disabled {
   background: #444;
   cursor: not-allowed;
-  box-shadow: none;
 }
+
 .fpa-clear-btn {
-  padding: 0.6rem 1rem;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
+
 .fpa-clear-btn:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Loading */
 .fpa-loading {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
 }
+
 .fpa-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(139, 92, 246, 0.15);
+  width: 56px;
+  height: 56px;
+  border: 3px solid rgba(139, 92, 246, 0.1);
   border-top-color: #8b5cf6;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1.5rem;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.fpa-loading-text {
-  color: #aaa;
-  font-size: 1rem;
-  animation: pulse 1.5s ease-in-out infinite;
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.fpa-loading-text {
+  color: #888;
+  font-size: 0.95rem;
+}
 
 /* Results */
 .fpa-results {
-  margin-top: 1.5rem;
-  animation: fpaFadeIn 0.5s ease-out;
+  animation: fadeUp 0.5s ease-out;
 }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Food Header */
 .fpa-food-header {
   text-align: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   margin-bottom: 1.5rem;
 }
+
 .fpa-food-name {
   font-size: 1.75rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
   margin-bottom: 0.5rem;
 }
+
 .fpa-food-desc {
-  color: #999;
+  color: #888;
   font-size: 0.95rem;
   line-height: 1.6;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 500px;
+  margin: 0 auto 1rem;
 }
 
-/* Health Score Badge */
 .fpa-health-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  padding: 0.6rem 1.25rem;
   border-radius: 50px;
-  margin: 1rem auto;
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-/* Calorie Gauge */
+/* Calorie Section */
 .fpa-calorie-section {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
+
 .fpa-calorie-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
+
 .fpa-calorie-label {
-  font-size: 0.9rem;
-  color: #aaa;
+  font-size: 0.85rem;
+  color: #888;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }
+
 .fpa-calorie-value {
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 2.25rem;
+  font-weight: 700;
   color: #f59e0b;
 }
+
 .fpa-calorie-unit {
-  font-size: 0.9rem;
-  color: #888;
+  font-size: 1rem;
+  color: #666;
   font-weight: 400;
 }
+
 .fpa-serving-info {
   font-size: 0.8rem;
-  color: #666;
+  color: #555;
   margin-top: 0.25rem;
 }
 
-/* Macro Bars */
+/* Macros Grid */
 .fpa-macros-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
+
 .fpa-macro-card {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 14px;
-  padding: 1rem;
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: all 0.3s ease;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
 }
+
 .fpa-macro-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  border-color: rgba(255, 255, 255, 0.08);
 }
+
 .fpa-macro-name {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.72rem;
+  color: #666;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
+  font-weight: 500;
 }
+
 .fpa-macro-value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
+
 .fpa-macro-bar-track {
-  height: 6px;
-  background: rgba(255,255,255,0.06);
+  height: 5px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
+
 .fpa-macro-bar-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.8s ease;
 }
 
-/* Vitamins & Minerals */
+/* Nutrients Section */
 .fpa-nutrients-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+
 .fpa-nutrient-group {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 14px;
   padding: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
+
 .fpa-nutrient-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #ddd;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .fpa-nutrient-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   font-size: 0.85rem;
 }
-.fpa-nutrient-item:last-child { border-bottom: none; }
-.fpa-nutrient-name { color: #aaa; }
-.fpa-nutrient-value { color: #e0e0e0; font-weight: 500; }
 
-/* Benefits */
+.fpa-nutrient-item:last-child {
+  border-bottom: none;
+}
+
+.fpa-nutrient-name {
+  color: #888;
+}
+
+.fpa-nutrient-value {
+  color: #ccc;
+  font-weight: 500;
+}
+
+/* Benefits Section */
 .fpa-benefits-section {
   background: rgba(34, 197, 94, 0.04);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid rgba(34, 197, 94, 0.15);
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(34, 197, 94, 0.1);
 }
+
 .fpa-benefits-title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #22c55e;
+  color: #4ade80;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .fpa-benefit-item {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.6rem 0;
-  color: #ccc;
+  color: #bbb;
   font-size: 0.9rem;
   line-height: 1.5;
 }
+
 .fpa-benefit-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #22c55e;
+  background: #4ade80;
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: 7px;
 }
 
-/* Intake Advice */
+/* Advice Box */
 .fpa-advice {
-  background: rgba(59, 130, 246, 0.06);
+  background: rgba(59, 130, 246, 0.05);
   border-radius: 14px;
   padding: 1.25rem;
-  border-left: 4px solid #3b82f6;
+  border-left: 3px solid #3b82f6;
   font-size: 0.9rem;
-  color: #bbb;
+  color: #9ac4fd;
   line-height: 1.6;
 }
 
+/* Mobile */
 @media (max-width: 640px) {
-  .fpa-nutrients-section { grid-template-columns: 1fr; }
-  .fpa-macros-grid { grid-template-columns: repeat(2, 1fr); }
+  .fpa-container {
+    padding: 1.5rem;
+  }
+
+  .fpa-nutrients-section {
+    grid-template-columns: 1fr;
+  }
+
+  .fpa-macros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fpa-food-name {
+    font-size: 1.5rem;
+  }
+
+  .fpa-calorie-value {
+    font-size: 1.75rem;
+  }
 }
