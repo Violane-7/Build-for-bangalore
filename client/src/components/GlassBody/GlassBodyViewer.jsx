@@ -338,7 +338,7 @@ export default function GlassBodyViewer() {
           marginBottom: "6px",
           fontWeight: 600,
         }}>
-          PreventAI
+          PranexusAI
         </div>
         <div style={{
           fontSize: "1.1rem",

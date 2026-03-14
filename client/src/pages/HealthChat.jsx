@@ -61,7 +61,7 @@ export default function HealthChat() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
             "HTTP-Referer": window.location.origin,
-            "X-Title": "PreventAI Health Chat",
+            "X-Title": "PranexusAI Health Chat",
           },
           body: JSON.stringify({
             model,

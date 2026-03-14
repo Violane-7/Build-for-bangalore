@@ -29,7 +29,7 @@ app.get("/api/ping", (req, res) => res.json({ status: "ok" }));
 // Friendly root response for direct backend visits.
 app.get("/", (req, res) => {
   res.status(200).json({
-    service: "PreventAI backend",
+    service: "PranexusAI backend",
     status: "running",
     note: "Use the frontend at http://localhost:3000 and API routes under /api/*",
   });

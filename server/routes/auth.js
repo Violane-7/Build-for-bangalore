@@ -1,7 +1,9 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/User");
+const { sendVerificationEmail } = require("../services/emailService");
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -16,21 +18,78 @@ router.post("/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     const user = await User.create({
       name,
       email,
       password: hashed,
       gender,
       dob,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
+      emailVerified: false,
     });
 
-    const token = jwt.sign(
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+      // Continue anyway - user can still verify later
+    }
+
+    res.status(201).json({
+      message: "Registration successful. Please check your email to verify your account.",
+      user: { id: user._id, name, email, gender, emailVerified: false },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/verify-email
+router.post("/verify-email", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Verification token is required" });
+    }
+
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired verification token" });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    const jwtToken = jwt.sign(
       { id: user._id, gender: user.gender },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    res.status(201).json({ token, user: { id: user._id, name, email, gender } });
+    res.json({
+      message: "Email verified successfully!",
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        gender: user.gender,
+        emailVerified: true,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -51,13 +110,66 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in",
+        emailVerified: false,
+        userId: user._id,
+      });
+    }
+
+    const jwtToken = jwt.sign(
       { id: user._id, gender: user.gender },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    res.json({ token, user: { id: user._id, name: user.name, email, gender: user.gender } });
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email,
+        gender: user.gender,
+        emailVerified: user.emailVerified,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/resend-verification
+router.post("/resend-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    user.emailVerificationToken = verificationToken;
+    user.emailVerificationExpires = verificationExpires;
+    await user.save();
+
+    // Send verification email
+    await sendVerificationEmail(email, verificationToken);
+
+    res.json({ message: "Verification email sent. Please check your email." });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

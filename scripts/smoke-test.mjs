@@ -103,7 +103,7 @@ async function runTest(test) {
 }
 
 async function main() {
-  console.log("Running PreventAI smoke tests...");
+  console.log("Running PranexusAI smoke tests...");
   console.log(`Server URL: ${SERVER_URL}`);
   console.log(`AI URL: ${AI_URL}\n`);
 

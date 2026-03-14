@@ -1,4 +1,4 @@
-# PreventAI — Full Project Plan
+# PranexusAI — Full Project Plan
 
 > **Team:** 3 MERN Developers + 1 AI/ML Developer  
 > **Tools:** Cursor IDE + Claude 4.6  
@@ -218,7 +218,7 @@ cd ai-service && uvicorn main:app --reload   # port 8000
 ## 5. Folder Structure
 
 ```
-preventai/
+pranexusai/
 ├── client/                    # React (Vite)
 │   ├── src/
 │   │   ├── components/

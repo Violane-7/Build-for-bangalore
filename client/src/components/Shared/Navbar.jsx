@@ -32,7 +32,7 @@ export default function Navbar() {
   return (
     <nav style={navStyle}>
       <Link to="/dashboard" style={{ color: "#fff", fontWeight: "bold", textDecoration: "none" }}>
-        PreventAI
+        PranexusAI
       </Link>
       {user && (
         <div>

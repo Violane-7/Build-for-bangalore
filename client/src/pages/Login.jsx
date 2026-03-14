@@ -120,7 +120,7 @@ export default function Login() {
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
             </motion.div>
-            <span className="login-brand-text">PreventAI</span>
+            <span className="login-brand-text">PranexusAI</span>
             <span className="login-brand-badge">Health Dashboard</span>
           </div>
 

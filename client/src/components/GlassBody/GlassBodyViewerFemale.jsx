@@ -377,7 +377,7 @@ export default function GlassBodyViewerFemale() {
         zIndex: 10,
       }}>
         <div style={{ fontSize: "0.6rem", color: "#c864ff", letterSpacing: "4px", textTransform: "uppercase", marginBottom: "6px", fontWeight: 600 }}>
-          PreventAI
+          PranexusAI
         </div>
         <div style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.9)", fontWeight: 200, letterSpacing: "2px" }}>
           Female Digital Health Twin

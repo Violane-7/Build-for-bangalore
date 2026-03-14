@@ -1,7 +1,7 @@
 {
-  "name": "preventai",
+  "name": "pranexusai",
   "version": "1.0.0",
-  "description": "PreventAI — Health prediction and prevention platform",
+  "description": "PranexusAI — Health prediction and prevention platform",
   "scripts": {
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:ai\"",

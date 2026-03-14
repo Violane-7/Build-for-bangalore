@@ -1,4 +1,4 @@
-# PreventAI — Quick Start Guide (Fixed)
+# PranexusAI — Quick Start Guide (Fixed)
 
 ## Issues Found & Fixed
 

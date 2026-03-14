@@ -244,7 +244,7 @@ export default function Exposome() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            ⚠️ Showing demo data. Add your <code>OPENWEATHER_API_KEY</code> in <code>server/.env</code> for live data.
+            ⚠️ Showing fallback demo data. Open-Meteo live feed is temporarily unavailable and will auto-retry.
           </motion.div>
         )}
 

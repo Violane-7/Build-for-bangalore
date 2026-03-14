@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     gender: { type: String, enum: ["male", "female", "other"], required: true },
     dob: { type: Date, required: true },
+    emailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String, default: null },
+    emailVerificationExpires: { type: Date, default: null },
     emergencyContacts: [
       {
         name: String,

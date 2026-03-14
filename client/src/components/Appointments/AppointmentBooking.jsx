@@ -329,7 +329,7 @@ export default function AppointmentBooking() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
-          <p className="appointments-kicker">PreventAI Care Network</p>
+          <p className="appointments-kicker">PranexusAI Care Network</p>
           <h1>Book verified doctors across India</h1>
           <p>
             Filter by city, specialty and consultation mode. Choose your slot, confirm in seconds,

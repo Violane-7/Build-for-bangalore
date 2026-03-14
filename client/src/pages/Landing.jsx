@@ -19,7 +19,7 @@ export default function Landing() {
       >
         <div className="landing-brand">
           <span className="landing-brand-dot" />
-          PreventAI
+          PranexusAI
         </div>
         <div className="landing-topbar-actions">
           <Link to="/login" className="landing-top-link">Sign In</Link>

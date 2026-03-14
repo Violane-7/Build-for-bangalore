@@ -718,7 +718,7 @@ export default function BigWatchDashboard() {
         <button className="w-topbar-back" onClick={() => navigate('/dashboard')}>
           ← Dashboard
         </button>
-        <span className="w-topbar-mid">PreventAI Watch</span>
+        <span className="w-topbar-mid">PranexusAI Watch</span>
         <div className="w-topbar-right">
           <span className={`w-connection-status ${isWearableConnected ? 'connected' : ''}`}>
             <span className="w-conn-dot" />

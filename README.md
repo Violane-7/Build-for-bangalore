@@ -1,4 +1,4 @@
-# PreventAI — Full Stack MERN + Python AI Boilerplate
+# PranexusAI — Full Stack MERN + Python AI Boilerplate
 
 A production-ready health prediction and prevention platform built with React, Node/Express, MongoDB, and Python FastAPI.
 
@@ -65,7 +65,7 @@ npm install
 Copy and edit `.env` files:
 ```bash
 # server/.env — fill in your MongoDB connection string
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/preventai
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/pranexusai
 JWT_SECRET=your_random_secret_here
 
 # ai-service/.env
@@ -153,7 +153,7 @@ const prediction = await aiService.predictRisk({ userId, metrics });
 }
 ```
 
-All endpoints are documented in the project plan (`preventai_project_plan.md`).
+All endpoints are documented in the project plan (`pranexusai_project_plan.md`).
 
 ---
 
@@ -191,7 +191,7 @@ buildForBenglore/
 ├── package.json             (root scripts)
 ├── .gitignore
 ├── .env.example
-└── preventai_project_plan.md (full architecture)
+└── pranexusai_project_plan.md (full architecture)
 ```
 
 ---
@@ -220,7 +220,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 # Endpoint: http://localhost:8000/ping
 curl http://localhost:8000/ping
-# Should return: {"status": "ok", "service": "PreventAI AI Service"}
+# Should return: {"status": "ok", "service": "PranexusAI AI Service"}
 ```
 
 ### 4. Test Full Flow (with mock data)
@@ -283,7 +283,7 @@ curl -X POST http://localhost:5000/api/health/analyze \
 
 ## 📚 Resources
 
-- **Full Architecture:** `preventai_project_plan.md`
+- **Full Architecture:** `pranexusai_project_plan.md`
 - **React Starter:** https://vitejs.dev/guide/ssr.html
 - **FastAPI Docs:** https://fastapi.tiangolo.com/
 - **MongoDB:** https://www.mongodb.com/docs/
@@ -301,7 +301,7 @@ curl -X POST http://localhost:5000/api/health/analyze \
 
 ---
 
-**Questions?** Check the full plan in `preventai_project_plan.md` or comment in your component's TODO sections.
+**Questions?** Check the full plan in `pranexusai_project_plan.md` or comment in your component's TODO sections.
 
 Happy building! 🚀
 "# Build-for-bangalore" 

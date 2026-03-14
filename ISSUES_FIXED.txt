@@ -1,5 +1,5 @@
 ================================================================================
-                    PREVENTAI BOILERPLATE - ISSUES FIXED
+                    PRANEXUSAI BOILERPLATE - ISSUES FIXED
 ================================================================================
 
 ISSUE 1: BACKEND NOT WORKING
@@ -112,8 +112,8 @@ TERMINAL 3 - AI Service:
    - After:  Only fastapi, uvicorn, python-multipart, python-dotenv, Pillow
    
 3. server/.env
-   - Before: mongodb+srv://user:password@cluster.mongodb.net/preventai
-   - After:  mongodb://localhost:27017/preventai (local fallback)
+   - Before: mongodb+srv://user:password@cluster.mongodb.net/pranexusai
+   - After:  mongodb://localhost:27017/pranexusai (local fallback)
 
 ================================================================================
                          READY FOR TEAM DEVELOPMENT

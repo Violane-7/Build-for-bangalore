@@ -14,4 +14,4 @@ def get_db():
         if not uri:
             raise RuntimeError("MONGODB_URI not set in environment")
         _client = MongoClient(uri)
-    return _client["preventai"]
+    return _client["pranexusai"]

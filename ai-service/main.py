@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="PreventAI — AI Microservice",
-    description="Health prediction and intelligence engine for PreventAI",
+    title="PranexusAI — AI Microservice",
+    description="Health prediction and intelligence engine for PranexusAI",
     version="1.0.0",
 )
 
@@ -56,7 +56,7 @@ app.include_router(doctor_match.router, prefix="/doctor-match",  tags=["Doctor M
 @app.get("/")
 def root():
     return {
-        "service": "PreventAI AI Service",
+        "service": "PranexusAI AI Service",
         "version": "1.0.0",
         "status": "running",
         "endpoints": [
@@ -81,12 +81,12 @@ def root():
 
 @app.get("/ping")
 def ping():
-    return {"status": "ok", "service": "PreventAI AI Service"}
+    return {"status": "ok", "service": "PranexusAI AI Service"}
 
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting PreventAI AI Microservice")
+    logger.info("Starting PranexusAI AI Microservice")
     # Check OpenRouter API key (without revealing it)
     api_key = os.getenv("OPENROUTER_API_KEY")
     if api_key:
@@ -97,4 +97,4 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Shutting down PreventAI AI Microservice")
+    logger.info("Shutting down PranexusAI AI Microservice")

@@ -4,8 +4,57 @@ const ExposomeData = require("../models/ExposomeData");
 const aiService = require("../services/aiService");
 const axios = require("axios");
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || "";
-const OPENWEATHER_BASE = "https://api.openweathermap.org";
+// ── Open-Meteo API (free, no key required) ──
+const OPEN_METEO_WEATHER = "https://api.open-meteo.com/v1/forecast";
+const OPEN_METEO_AQI     = "https://air-quality-api.open-meteo.com/v1/air-quality";
+
+const WMO_DESCRIPTION = {
+  0: "Clear sky",
+  1: "Mainly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Fog",
+  48: "Rime fog",
+  51: "Light drizzle",
+  53: "Drizzle",
+  55: "Dense drizzle",
+  61: "Slight rain",
+  63: "Moderate rain",
+  65: "Heavy rain",
+  71: "Slight snow",
+  73: "Moderate snow",
+  75: "Heavy snow",
+  80: "Rain showers",
+  81: "Moderate showers",
+  82: "Heavy showers",
+  95: "Thunderstorm",
+  96: "Thunderstorm hail",
+  99: "Heavy thunderstorm",
+};
+
+const WMO_ICON = {
+  0: "01d",
+  1: "02d",
+  2: "03d",
+  3: "04d",
+  45: "50d",
+  48: "50d",
+  51: "09d",
+  53: "09d",
+  55: "09d",
+  61: "10d",
+  63: "10d",
+  65: "10d",
+  71: "13d",
+  73: "13d",
+  75: "13d",
+  80: "09d",
+  81: "09d",
+  82: "09d",
+  95: "11d",
+  96: "11d",
+  99: "11d",
+};
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -26,6 +75,19 @@ function getSunlightIntensity(uvIndex) {
   if (uvIndex <= 7) return "high";
   if (uvIndex <= 10) return "very high";
   return "extreme";
+}
+
+function normalizeOpenMeteoAqi(aqiValue) {
+  const numeric = Number(aqiValue);
+  if (!Number.isFinite(numeric)) return 2;
+
+  // Open-Meteo may return AQI on either a 1-5 bucket scale or a 0-100 index.
+  if (numeric <= 5) return Math.min(5, Math.max(1, Math.round(numeric)));
+  if (numeric <= 20) return 1;
+  if (numeric <= 40) return 2;
+  if (numeric <= 60) return 3;
+  if (numeric <= 80) return 4;
+  return 5;
 }
 
 function generateHealthAlerts(weather, pollutants, aqi, uvIndex) {
@@ -345,107 +407,102 @@ router.get("/current", auth, async (req, res) => {
   try {
     const { lat = 12.97, lon = 77.59 } = req.query;
 
-    let weatherData, pollutionData, uvData;
+    let weatherData, pollutionData;
 
-    if (OPENWEATHER_API_KEY) {
-      try {
-        // Fetch weather, air pollution, and UV data in parallel
-        const [weatherRes, pollutionRes] = await Promise.all([
-          axios.get(`${OPENWEATHER_BASE}/data/2.5/weather`, {
-            params: { lat, lon, appid: OPENWEATHER_API_KEY, units: "metric" },
-          }),
-          axios.get(`${OPENWEATHER_BASE}/data/2.5/air_pollution`, {
-            params: { lat, lon, appid: OPENWEATHER_API_KEY },
-          }),
-        ]);
-
-        const w = weatherRes.data;
-        const p = pollutionRes.data.list[0];
-
-        weatherData = {
-          temp: Math.round(w.main.temp),
-          feelsLike: Math.round(w.main.feels_like),
-          humidity: w.main.humidity,
-          description: w.weather[0].description,
-          icon: w.weather[0].icon,
-          windSpeed: w.wind.speed,
-          pressure: w.main.pressure,
-          visibility: w.visibility,
-          clouds: w.clouds.all,
-          sunrise: w.sys.sunrise,
-          sunset: w.sys.sunset,
-        };
-
-        pollutionData = {
-          pm25: p.components.pm2_5,
-          pm10: p.components.pm10,
-          co: p.components.co,
-          no2: p.components.no2,
-          o3: p.components.o3,
-          so2: p.components.so2,
-          nh3: p.components.nh3,
-        };
-
-        const aqiValue = p.main.aqi;
-
-        // Try to fetch UV index
-        let uvIndex = 0;
-        try {
-          const uvRes = await axios.get(`${OPENWEATHER_BASE}/data/2.5/uvi`, {
-            params: { lat, lon, appid: OPENWEATHER_API_KEY },
-          });
-          uvIndex = uvRes.data.value || 0;
-        } catch {
-          // UV endpoint may not be available on all tiers, estimate from weather
-          const hour = new Date().getHours();
-          uvIndex = hour >= 10 && hour <= 16 ? 6 : 3;
-        }
-
-        const sunlightIntensity = getSunlightIntensity(uvIndex);
-        const alerts = generateHealthAlerts(weatherData, pollutionData, aqiValue, uvIndex);
-
-        // Enrich weather/AQI with AI risk scoring when AI service is available.
-        let aiRisk = {};
-        try {
-          const aiResponse = await aiService.exposomeRisk({
-            userId: req.user.id,
-            aqi: aqiValue,
-            uvIndex,
-            temperatureCelsius: weatherData.temp,
-            humidity: weatherData.humidity,
-          });
-          aiRisk = aiResponse.data || {};
-        } catch (aiErr) {
-          console.warn("AI exposome risk unavailable:", aiErr.message);
-        }
-
-        const responseData = {
-          weather: weatherData,
-          aqi: aqiValue,
-          aqiCategory: getAQICategory(aqiValue),
-          uvIndex,
-          sunlightIntensity,
-          pollutants: pollutionData,
-          alerts,
-          location: {
-            lat: parseFloat(lat),
-            lon: parseFloat(lon),
-            city: w.name || "Unknown",
-            country: w.sys.country || "Unknown",
+    try {
+      // Fetch weather + AQI from Open-Meteo (free, no key required)
+      const [weatherRes, aqiRes] = await Promise.all([
+        axios.get(OPEN_METEO_WEATHER, {
+          params: {
+            latitude: lat, longitude: lon,
+            current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,cloud_cover,uv_index",
+            daily: "sunrise,sunset",
+            timezone: "auto",
           },
-          aiRisk,
-        };
+        }),
+        axios.get(OPEN_METEO_AQI, {
+          params: {
+            latitude: lat, longitude: lon,
+            current: "pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone,sulphur_dioxide,european_aqi",
+          },
+        }),
+      ]);
 
-        // Save to DB (non-blocking)
-        ExposomeData.create({
+      const wc = weatherRes.data.current;
+      const daily = weatherRes.data.daily;
+      const aq = aqiRes.data.current;
+
+      weatherData = {
+        temp: Math.round(wc.temperature_2m),
+        feelsLike: Math.round(wc.apparent_temperature),
+        humidity: wc.relative_humidity_2m,
+        description: WMO_DESCRIPTION[wc.weather_code] || "Unknown",
+        icon: WMO_ICON[wc.weather_code] || "01d",
+        windSpeed: wc.wind_speed_10m,
+        pressure: Math.round(wc.surface_pressure),
+        visibility: 10000,
+        clouds: wc.cloud_cover,
+        sunrise: daily?.sunrise?.[0] ? Math.floor(new Date(daily.sunrise[0]).getTime() / 1000) : 0,
+        sunset: daily?.sunset?.[0] ? Math.floor(new Date(daily.sunset[0]).getTime() / 1000) : 0,
+      };
+
+      pollutionData = {
+        pm25: aq.pm2_5 || 0,
+        pm10: aq.pm10 || 0,
+        co: aq.carbon_monoxide || 0,
+        no2: aq.nitrogen_dioxide || 0,
+        o3: aq.ozone || 0,
+        so2: aq.sulphur_dioxide || 0,
+        nh3: 0,
+      };
+
+      const aqiValue = normalizeOpenMeteoAqi(aq.european_aqi);
+
+      const uvIndex = wc.uv_index || 0;
+      const sunlightIntensity = getSunlightIntensity(uvIndex);
+      const alerts = generateHealthAlerts(weatherData, pollutionData, aqiValue, uvIndex);
+
+      // Enrich with AI risk scoring
+      let aiRisk = {};
+      try {
+        const aiResponse = await aiService.exposomeRisk({
           userId: req.user.id,
-          ...responseData,
-        }).catch((err) => console.warn("Failed to save exposome data:", err.message));
-
-        return res.json(responseData);
-      } catch (apiErr) {
-        console.warn("OpenWeatherMap API error, falling back to mock data:", apiErr.message);
+          aqi: aqiValue,
+          uvIndex,
+          temperatureCelsius: weatherData.temp,
+          humidity: weatherData.humidity,
+        });
+        aiRisk = aiResponse.data || {};
+      } catch (aiErr) {
+        console.warn("AI exposome risk unavailable:", aiErr.message);
       }
+
+      const responseData = {
+        weather: weatherData,
+        aqi: aqiValue,
+        aqiCategory: getAQICategory(aqiValue),
+        uvIndex,
+        sunlightIntensity,
+        pollutants: pollutionData,
+        alerts,
+        location: {
+          lat: parseFloat(lat),
+          lon: parseFloat(lon),
+          city: "Your Location",
+          country: "",
+        },
+        aiRisk,
+      };
+
+      // Save to DB (non-blocking)
+      ExposomeData.create({
+        userId: req.user.id,
+        ...responseData,
+      }).catch((err) => console.warn("Failed to save exposome data:", err.message));
+
+      return res.json(responseData);
+    } catch (apiErr) {
+      console.warn("Open-Meteo API error, falling back to mock data:", apiErr.message);
     }
 
     // Fallback to mock data
@@ -468,25 +525,24 @@ router.post("/suggestions", auth, async (req, res) => {
     let weather = { temp: 28, humidity: 65, description: "Partly cloudy" };
     let aqi = 2;
 
-    if (OPENWEATHER_API_KEY) {
-      try {
-        const [weatherRes, pollutionRes] = await Promise.all([
-          axios.get(`${OPENWEATHER_BASE}/data/2.5/weather`, {
-            params: { lat, lon, appid: OPENWEATHER_API_KEY, units: "metric" },
-          }),
-          axios.get(`${OPENWEATHER_BASE}/data/2.5/air_pollution`, {
-            params: { lat, lon, appid: OPENWEATHER_API_KEY },
-          }),
-        ]);
-        weather = {
-          temp: Math.round(weatherRes.data.main.temp),
-          humidity: weatherRes.data.main.humidity,
-          description: weatherRes.data.weather[0].description,
-        };
-        aqi = pollutionRes.data.list[0].main.aqi;
-      } catch {
-        // Use defaults
-      }
+    try {
+      const [weatherRes, aqiRes] = await Promise.all([
+        axios.get(OPEN_METEO_WEATHER, {
+          params: { latitude: lat, longitude: lon, current: "temperature_2m,relative_humidity_2m,weather_code", timezone: "auto" },
+        }),
+        axios.get(OPEN_METEO_AQI, {
+          params: { latitude: lat, longitude: lon, current: "european_aqi" },
+        }),
+      ]);
+      const wc = weatherRes.data.current;
+      weather = {
+        temp: Math.round(wc.temperature_2m),
+        humidity: wc.relative_humidity_2m,
+        description: WMO_DESCRIPTION[wc.weather_code] || "Unknown",
+      };
+      aqi = normalizeOpenMeteoAqi(aqiRes.data.current?.european_aqi);
+    } catch {
+      // Use defaults
     }
 
     const currentHour = new Date().getHours();

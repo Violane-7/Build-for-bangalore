@@ -59,7 +59,7 @@ Removed unnecessary dependencies from `ai-service/requirements.txt`:
 
 **✅ Solution Applied:**
 Set sensible defaults for local development:
-- Updated `server/.env` to use `mongodb://localhost:27017/preventai`
+- Updated `server/.env` to use `mongodb://localhost:27017/pranexusai`
 - Updated `client/.env` to point to correct backend port (5001)
 - Created `.env` files in all three services with working config
 - Team can update `.env` files to MongoDB Atlas URI when ready
