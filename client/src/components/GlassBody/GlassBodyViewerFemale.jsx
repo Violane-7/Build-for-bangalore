@@ -13,10 +13,80 @@ import Brain from "./Brain";
 import Eyes from "./Eyes";
 import Skeleton from "./Skeleton";
 import Muscles from "./Muscles";
-import OrganInfoPanel from "./OrganInfoPanel";
+import FemaleOrganInfoPanel from "./FemaleOrganInfoPanel";
 import LayerToggle from "./LayerToggle";
 
-// Floating energy particles around the body
+/* ── Uterus as simple 3D mesh ── */
+function Uterus({ riskScore = 0.1, hovered, ...props }) {
+  const ref = useRef();
+  const riskColor = useMemo(() => {
+    if (riskScore > 0.7) return new THREE.Color("#ff2244");
+    if (riskScore > 0.4) return new THREE.Color("#ffaa00");
+    return new THREE.Color("#e879a8");
+  }, [riskScore]);
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    ref.current.scale.set(1 + Math.sin(t * 0.6) * 0.01, 1, 1 + Math.sin(t * 0.6) * 0.01);
+  });
+
+  return (
+    <group ref={ref} {...props}>
+      {/* Uterus body — upside-down pear shape */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.035, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.7]} />
+        <meshPhysicalMaterial
+          color={riskColor} emissive={riskColor}
+          emissiveIntensity={0.3 + (hovered ? 0.4 : 0)}
+          roughness={0.3} metalness={0.05}
+          transparent opacity={0.85} clearcoat={0.2}
+        />
+      </mesh>
+      {/* Left fallopian tube */}
+      <mesh position={[-0.04, 0.01, 0]} rotation={[0, 0, -0.5]}>
+        <cylinderGeometry args={[0.004, 0.004, 0.05, 8]} />
+        <meshPhysicalMaterial color={riskColor} emissive={riskColor} emissiveIntensity={0.2 + (hovered ? 0.3 : 0)} transparent opacity={0.8} />
+      </mesh>
+      {/* Right fallopian tube */}
+      <mesh position={[0.04, 0.01, 0]} rotation={[0, 0, 0.5]}>
+        <cylinderGeometry args={[0.004, 0.004, 0.05, 8]} />
+        <meshPhysicalMaterial color={riskColor} emissive={riskColor} emissiveIntensity={0.2 + (hovered ? 0.3 : 0)} transparent opacity={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Ovary as glowing sphere ── */
+function Ovary({ riskScore = 0.1, hovered, ...props }) {
+  const ref = useRef();
+  const riskColor = useMemo(() => {
+    if (riskScore > 0.7) return new THREE.Color("#ff2244");
+    if (riskScore > 0.4) return new THREE.Color("#ffaa00");
+    return new THREE.Color("#d8a0e0");
+  }, [riskScore]);
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    const s = 1 + Math.sin(t * 1.5) * 0.02;
+    ref.current.scale.setScalar(s);
+  });
+
+  return (
+    <mesh ref={ref} {...props}>
+      <sphereGeometry args={[0.018, 16, 16]} />
+      <meshPhysicalMaterial
+        color={riskColor} emissive={riskColor}
+        emissiveIntensity={0.3 + (hovered ? 0.4 : 0)}
+        roughness={0.25} metalness={0.05}
+        transparent opacity={0.88} clearcoat={0.3}
+      />
+    </mesh>
+  );
+}
+
+/* ── Floating energy particles ── */
 function EnergyParticles() {
   const ref = useRef();
   const count = 300;
@@ -35,7 +105,6 @@ function EnergyParticles() {
   useFrame((state) => {
     if (!ref.current) return;
     ref.current.rotation.y = state.clock.elapsedTime * 0.03;
-    // Gentle vertical float
     const t = state.clock.elapsedTime;
     const posArr = ref.current.geometry.attributes.position.array;
     for (let i = 0; i < count; i++) {
@@ -51,53 +120,29 @@ function EnergyParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" array={positions} count={count} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial
-        size={0.006}
-        color="#4488ff"
-        transparent
-        opacity={0.5}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
+      <pointsMaterial size={0.006} color="#c864ff" transparent opacity={0.5} sizeAttenuation blending={THREE.AdditiveBlending} depthWrite={false} />
     </points>
   );
 }
 
-// Glowing circular platform
+/* ── Platform ── */
 function Platform() {
   return (
     <group position={[0, 0.01, 0]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.3, 1.2, 64]} />
-        <meshStandardMaterial
-          color="#0a1628"
-          emissive="#112244"
-          emissiveIntensity={0.3}
-          transparent
-          opacity={0.6}
-          side={THREE.DoubleSide}
-        />
+        <meshStandardMaterial color="#1a0828" emissive="#2a1244" emissiveIntensity={0.3} transparent opacity={0.6} side={THREE.DoubleSide} />
       </mesh>
-      {/* Outer ring glow */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
         <ringGeometry args={[1.15, 1.22, 64]} />
-        <meshStandardMaterial
-          color="#2255aa"
-          emissive="#2255aa"
-          emissiveIntensity={1.5}
-          transparent
-          opacity={0.4}
-          side={THREE.DoubleSide}
-        />
+        <meshStandardMaterial color="#8822cc" emissive="#8822cc" emissiveIntensity={1.5} transparent opacity={0.4} side={THREE.DoubleSide} />
       </mesh>
-      {/* Grid */}
-      <gridHelper args={[3, 40, "#0a1a33", "#0d1f3c"]} position={[0, 0.001, 0]} />
+      <gridHelper args={[3, 40, "#1a0a33", "#1d0f3c"]} position={[0, 0.001, 0]} />
     </group>
   );
 }
 
-// Spine energy line (vertical glowing line along spine)
+/* ── Spine glow ── */
 function SpineGlow() {
   const ref = useRef();
   useFrame((state) => {
@@ -107,45 +152,39 @@ function SpineGlow() {
   return (
     <mesh ref={ref} position={[0, 1.0, -0.02]}>
       <cylinderGeometry args={[0.003, 0.003, 0.9, 6]} />
-      <meshStandardMaterial
-        color="#4488ff"
-        emissive="#4488ff"
-        emissiveIntensity={0.3}
-        transparent
-        opacity={0.25}
-      />
+      <meshStandardMaterial color="#c864ff" emissive="#c864ff" emissiveIntensity={0.3} transparent opacity={0.25} />
     </mesh>
   );
 }
 
-// Default risk scores — connect to your backend API later
 const DEFAULT_RISKS = {
-  heart: 0.65,
-  lungs: 0.25,
-  liver: 0.55,
-  kidneyL: 0.2,
-  kidneyR: 0.3,
-  stomach: 0.15,
-  digestive: 0.2,
-  brain: 0.45,
-  eyes: 0.35,
+  heart: 0.2,
+  lungs: 0.15,
+  liver: 0.1,
+  kidneyL: 0.1,
+  kidneyR: 0.1,
+  stomach: 0.1,
+  digestive: 0.1,
+  brain: 0.2,
+  eyes: 0.25,
+  uterus: 0.1,
+  ovaryL: 0.1,
+  ovaryR: 0.1,
 };
 
-/*
- * ORGAN POSITIONS — calibrated to the normalized skeleton:
- * Skeleton normalized to 1.8 tall, centered at origin (Y: -0.9 to +0.9)
- * Head top ~0.9, neck ~0.7, chest ~0.4, belly ~0.1, hips ~-0.1, feet ~-0.9
- */
 const ORGAN_POSITIONS = {
-  brain:     [0, 0.82, 0.02],        // inside skull, slightly forward
-  eyes:      [0, 0.76, 0.06],        // front of skull, eye-level
-  heart:     [-0.04, 0.35, 0.04],  // left-center chest
-  lungs:     [0, 0.38, 0],         // flanking heart
-  liver:     [0.08, 0.18, 0.04],   // right side, below lungs
-  stomach:   [-0.05, 0.12, 0.04],  // left side, below heart
-  digestive: [0, 0.05, 0.05],      // center abdomen, below stomach
-  kidneyL:   [-0.1, 0.1, -0.05],   // left posterior
-  kidneyR:   [0.1, 0.1, -0.05],    // right posterior
+  brain:     [0, 0.82, 0.02],
+  eyes:      [0, 0.76, 0.06],
+  heart:     [-0.04, 0.35, 0.04],
+  lungs:     [0, 0.38, 0],
+  liver:     [0.08, 0.18, 0.04],
+  stomach:   [-0.05, 0.12, 0.04],
+  digestive: [0, 0.05, 0.05],
+  kidneyL:   [-0.1, 0.1, -0.05],
+  kidneyR:   [0.1, 0.1, -0.05],
+  uterus:    [0, -0.05, 0.04],
+  ovaryL:    [-0.06, -0.03, 0.04],
+  ovaryR:    [0.06, -0.03, 0.04],
 };
 
 const ORGAN_LABELS = {
@@ -158,6 +197,9 @@ const ORGAN_LABELS = {
   digestive: "Digestive System",
   brain: "Brain",
   eyes: "Eyes",
+  uterus: "Uterus",
+  ovaryL: "Left Ovary",
+  ovaryR: "Right Ovary",
 };
 
 function OrganWrapper({ name, children, hoveredOrgan, onHover, onSelect }) {
@@ -172,24 +214,18 @@ function OrganWrapper({ name, children, hoveredOrgan, onHover, onSelect }) {
   );
 }
 
-function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrgan, onHover, riskScores }) {
+function FemaleBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrgan, onHover, riskScores }) {
   return (
     <>
-      {/* === LIGHTING === */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[3, 4, 5]} intensity={1} color="#ffffff" />
-      <directionalLight position={[-3, 2, -3]} intensity={0.4} color="#8899cc" />
-      <pointLight position={[0, 0.3, 1]} intensity={0.5} color="#4488ff" distance={4} />
+      <directionalLight position={[-3, 2, -3]} intensity={0.4} color="#cc99ee" />
+      <pointLight position={[0, 0.3, 1]} intensity={0.5} color="#c864ff" distance={4} />
 
-      {/* === BODY === */}
       <group scale={1} position={[0, -0.1, 0]}>
-        {/* === SKELETON === */}
         <Skeleton visible={activeLayers.skeleton} />
-
-        {/* === MUSCLES === */}
         <Muscles visible={activeLayers.muscles} />
 
-        {/* === ORGANS === */}
         {activeLayers.organs && (
           <>
             <OrganWrapper name="brain" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
@@ -216,6 +252,10 @@ function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrg
               <Stomach position={ORGAN_POSITIONS.stomach} riskScore={riskScores.stomach} hovered={hoveredOrgan === "stomach"} />
             </OrganWrapper>
 
+            <OrganWrapper name="digestive" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
+              <DigestiveSystem position={ORGAN_POSITIONS.digestive} riskScore={riskScores.digestive} hovered={hoveredOrgan === "digestive"} />
+            </OrganWrapper>
+
             <OrganWrapper name="kidneyL" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
               <Kidney position={ORGAN_POSITIONS.kidneyL} riskScore={riskScores.kidneyL} hovered={hoveredOrgan === "kidneyL"} />
             </OrganWrapper>
@@ -224,8 +264,17 @@ function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrg
               <Kidney position={ORGAN_POSITIONS.kidneyR} riskScore={riskScores.kidneyR} hovered={hoveredOrgan === "kidneyR"} />
             </OrganWrapper>
 
-            <OrganWrapper name="digestive" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
-              <DigestiveSystem position={ORGAN_POSITIONS.digestive} riskScore={riskScores.digestive} hovered={hoveredOrgan === "digestive"} />
+            {/* Female-specific organs */}
+            <OrganWrapper name="uterus" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
+              <Uterus position={ORGAN_POSITIONS.uterus} riskScore={riskScores.uterus} hovered={hoveredOrgan === "uterus"} />
+            </OrganWrapper>
+
+            <OrganWrapper name="ovaryL" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
+              <Ovary position={ORGAN_POSITIONS.ovaryL} riskScore={riskScores.ovaryL} hovered={hoveredOrgan === "ovaryL"} />
+            </OrganWrapper>
+
+            <OrganWrapper name="ovaryR" hoveredOrgan={hoveredOrgan} onHover={onHover} onSelect={onSelectOrgan}>
+              <Ovary position={ORGAN_POSITIONS.ovaryR} riskScore={riskScores.ovaryR} hovered={hoveredOrgan === "ovaryR"} />
             </OrganWrapper>
 
             {/* Hover tooltip */}
@@ -247,7 +296,7 @@ function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrg
                   fontSize: "0.72rem",
                   fontWeight: 500,
                   whiteSpace: "nowrap",
-                  border: "1px solid rgba(68,136,255,0.35)",
+                  border: "1px solid rgba(200,100,255,0.35)",
                   backdropFilter: "blur(8px)",
                   letterSpacing: "0.5px",
                   boxShadow: "0 4px 15px rgba(0,0,0,0.5)",
@@ -260,7 +309,6 @@ function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrg
         )}
       </group>
 
-      {/* === CONTROLS === */}
       <OrbitControls
         enablePan={false}
         minDistance={2.2}
@@ -275,7 +323,7 @@ function HumanBodyScene({ activeLayers, selectedOrgan, onSelectOrgan, hoveredOrg
   );
 }
 
-export default function GlassBodyViewer() {
+export default function GlassBodyViewerFemale() {
   const [activeLayers, setActiveLayers] = useState({
     skeleton: true,
     muscles: false,
@@ -290,7 +338,7 @@ export default function GlassBodyViewer() {
   }, []);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", background: "linear-gradient(180deg, #0a0e1a 0%, #111827 50%, #1a2240 100%)" }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", background: "linear-gradient(180deg, #120a1e 0%, #1a1030 50%, #251842 100%)" }}>
       <Canvas
         camera={{ position: [0, 0.2, 3.5], fov: 40 }}
         gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
@@ -299,7 +347,7 @@ export default function GlassBodyViewer() {
         onPointerMissed={() => setSelectedOrgan(null)}
       >
         <Suspense fallback={null}>
-          <HumanBodyScene
+          <FemaleBodyScene
             activeLayers={activeLayers}
             selectedOrgan={selectedOrgan}
             onSelectOrgan={setSelectedOrgan}
@@ -310,11 +358,9 @@ export default function GlassBodyViewer() {
         </Suspense>
       </Canvas>
 
-      {/* Layer toggle UI */}
       <LayerToggle activeLayers={activeLayers} onToggle={toggleLayer} />
 
-      {/* Organ info panel */}
-      <OrganInfoPanel
+      <FemaleOrganInfoPanel
         selectedOrgan={selectedOrgan}
         onClose={() => setSelectedOrgan(null)}
         riskScores={riskScores}
@@ -330,30 +376,13 @@ export default function GlassBodyViewer() {
         pointerEvents: "none",
         zIndex: 10,
       }}>
-        <div style={{
-          fontSize: "0.6rem",
-          color: "#4488ff",
-          letterSpacing: "4px",
-          textTransform: "uppercase",
-          marginBottom: "6px",
-          fontWeight: 600,
-        }}>
+        <div style={{ fontSize: "0.6rem", color: "#c864ff", letterSpacing: "4px", textTransform: "uppercase", marginBottom: "6px", fontWeight: 600 }}>
           PreventAI
         </div>
-        <div style={{
-          fontSize: "1.1rem",
-          color: "rgba(255,255,255,0.9)",
-          fontWeight: 200,
-          letterSpacing: "2px",
-        }}>
-          Digital Health Twin
+        <div style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.9)", fontWeight: 200, letterSpacing: "2px" }}>
+          Female Digital Health Twin
         </div>
-        <div style={{
-          fontSize: "0.65rem",
-          color: "rgba(255,255,255,0.25)",
-          marginTop: "6px",
-          letterSpacing: "0.5px",
-        }}>
+        <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.25)", marginTop: "6px", letterSpacing: "0.5px" }}>
           Click any organ for health insights · Scroll to zoom · Drag to rotate
         </div>
       </div>
