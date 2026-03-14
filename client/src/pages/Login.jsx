@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import HealthOrb from "../components/Shared/HealthOrb";
+import api from "../services/api";
 import "./Login.css";
 
 const healthStats = [
@@ -26,6 +27,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [theme, setTheme] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") || "dark";
@@ -52,9 +54,25 @@ export default function Login() {
       await login(email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Login failed");
+      if (err?.response?.status === 403 && err?.response?.data?.emailVerified === false) {
+        setUnverifiedEmail(email);
+        setError("Please verify your email before logging in.");
+      } else {
+        setUnverifiedEmail("");
+        setError(err?.response?.data?.message || err?.message || "Login failed");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      await api.post("/auth/resend-verification", { email: unverifiedEmail });
+      setError("Verification email sent! Check your inbox.");
+      setUnverifiedEmail("");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to resend verification email");
     }
   };
 
@@ -222,7 +240,28 @@ export default function Login() {
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  <span>{error}</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <span>{error}</span>
+                    {unverifiedEmail && (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--login-primary)",
+                          fontSize: "0.85rem",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          padding: 0,
+                          textAlign: "left",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Resend verification email
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
