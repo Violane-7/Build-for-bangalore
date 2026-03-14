@@ -6,3 +6,5 @@ Pillow==10.3.0
 python-multipart==0.0.9
 httpx==0.27.0
 cachetools==5.3.3
+numpy
+scikit-learn

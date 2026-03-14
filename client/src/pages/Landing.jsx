@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
 import "./Login.css";
 
 export default function Landing() {
+  const { user } = useAuth();
+  if (user) return <Navigate to="/dashboard" replace />;
+
   return (
     <div className="landing-page">
       <div className="landing-background-grid" aria-hidden="true" />

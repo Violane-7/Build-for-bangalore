@@ -156,6 +156,15 @@ const FEATURE_CARDS = [
     img: "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=1200&q=80",
     accent: "#dc2626",
   },
+  {
+    to: "/chat",
+    label: "Health Chat",
+    tagline: "Your AI health companion",
+    desc: "Ask anything about symptoms, medications, sleep patterns, or nutrition and get instant, medically-informed guidance from an AI trained on clinical knowledge.",
+    icon: "💬",
+    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80",
+    accent: "#06b6d4",
+  },
 ];
 
 function AnimatedNumber({ value }) {
